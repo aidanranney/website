@@ -1,0 +1,10 @@
+{
+  "mcp": {
+    "tidewave": {
+      "type": "remote",
+      "url": "http://localhost:4000/tidewave/mcp",
+      "enabled": true
+    }
+  },
+  "plugins": ["superpowers@git+https://github.com/obra/superpowers.git"]
+}
