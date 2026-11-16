@@ -37,3 +37,7 @@ npm-debug.log
 
 # direnv
 .envrc
+
+# macos
+.DS_Store
+*/*/.DS_Store

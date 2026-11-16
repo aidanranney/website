@@ -48,8 +48,8 @@ defmodule PortfolioWeb.Layouts do
           <.link navigate={~p"/contact"} class="transition-colors hover:text-zinc-900">
             Contact
           </.link>
-          <span class="h-4 w-px bg-zinc-200" aria-hidden="true"></span>
           <%= if @current_scope && @current_scope.user do %>
+            <span class="h-4 w-px bg-zinc-200" aria-hidden="true"></span>
             <.link href={~p"/movie-night"} class="transition-colors hover:text-zinc-900">
               Movie night
             </.link>
