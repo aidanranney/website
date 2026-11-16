@@ -1,0 +1,193 @@
+## This file is a PO Template file.
+##
+## "msgid"s here are often extracted from source code.
+## Add new messages manually only if they're dynamic
+## messages that can't be statically extracted.
+##
+## Run "mix gettext.extract" to bring this file up to
+## date. Leave "msgstr"s empty as changing them here has no
+## effect: edit them in PO (.po) files instead.
+#
+msgid ""
+msgstr ""
+
+#: lib/website_web/components/core_components.ex:424
+#, elixir-autogen, elixir-format
+msgid "Actions"
+msgstr ""
+
+#: lib/website_web/components/layouts.ex:113
+#: lib/website_web/components/layouts.ex:128
+#, elixir-autogen, elixir-format
+msgid "Attempting to reconnect"
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:227
+#, elixir-autogen, elixir-format
+msgid "Close voting"
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:224
+#, elixir-autogen, elixir-format
+msgid "Close voting? This ends the night."
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:100
+#, elixir-autogen, elixir-format
+msgid "Could not close voting."
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:125
+#, elixir-autogen, elixir-format
+msgid "Could not delete that movie night."
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:77
+#, elixir-autogen, elixir-format
+msgid "Could not lock nominations."
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:55
+#, elixir-autogen, elixir-format
+msgid "Could not save that movie night."
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:236
+#, elixir-autogen, elixir-format
+msgid "Delete night"
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:233
+#, elixir-autogen, elixir-format
+msgid "Delete this movie night and all of its nominations and votes?"
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:261
+#, elixir-autogen, elixir-format
+msgid "Edit"
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:189
+#, elixir-autogen, elixir-format
+msgid "Edit night"
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:217
+#, elixir-autogen, elixir-format
+msgid "Lock nominations"
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:214
+#, elixir-autogen, elixir-format
+msgid "Lock nominations? Friends will no longer be able to add films."
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:116
+#, elixir-autogen, elixir-format
+msgid "Movie night deleted."
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:41
+#, elixir-autogen, elixir-format
+msgid "Movie night saved."
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:172
+#, elixir-autogen, elixir-format
+msgid "Movie nights"
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:179
+#: lib/website_web/live/admin_movie_night_live.ex:189
+#, elixir-autogen, elixir-format
+msgid "New night"
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:265
+#, elixir-autogen, elixir-format
+msgid "No movie nights yet."
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:71
+#, elixir-autogen, elixir-format
+msgid "Nominations are already locked."
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:68
+#, elixir-autogen, elixir-format
+msgid "Nominations locked."
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:198
+#, elixir-autogen, elixir-format
+msgid "Note (optional)"
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:52
+#: lib/website_web/live/admin_movie_night_live.ex:74
+#: lib/website_web/live/admin_movie_night_live.ex:97
+#: lib/website_web/live/admin_movie_night_live.ex:122
+#, elixir-autogen, elixir-format
+msgid "Only an admin can do that."
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:49
+#, elixir-autogen, elixir-format
+msgid "Please fix the errors below."
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:202
+#, elixir-autogen, elixir-format
+msgid "Save night"
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:173
+#, elixir-autogen, elixir-format
+msgid "Schedule a night, lock nominations, and close voting."
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:199
+#, elixir-autogen, elixir-format
+msgid "Sci-fi night"
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:63
+#: lib/website_web/live/admin_movie_night_live.ex:109
+#, elixir-autogen, elixir-format
+msgid "Select a movie night first."
+msgstr ""
+
+#: lib/website_web/components/layouts.ex:120
+#, elixir-autogen, elixir-format
+msgid "Something went wrong!"
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:147
+#, elixir-autogen, elixir-format
+msgid "That movie night no longer exists."
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:273
+#, elixir-autogen, elixir-format
+msgid "View the friend page"
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:91
+#, elixir-autogen, elixir-format
+msgid "Voting closed."
+msgstr ""
+
+#: lib/website_web/live/admin_movie_night_live.ex:94
+#, elixir-autogen, elixir-format
+msgid "Voting is not open."
+msgstr ""
+
+#: lib/website_web/components/layouts.ex:105
+#, elixir-autogen, elixir-format
+msgid "We can't find the internet"
+msgstr ""
+
+#: lib/website_web/components/core_components.ex:77
+#, elixir-autogen, elixir-format
+msgid "close"
+msgstr ""

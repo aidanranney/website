@@ -1,20 +1,13 @@
 defmodule Portfolio.TMDB do
   @moduledoc """
-  A thin client for The Movie Database (TMDB) API.
+  Client for The Movie Database (TMDB) API.
 
-  Only `tmdb_id` values are persisted; movie details are fetched here at render
-  time. Configuration lives under `config :website, Portfolio.TMDB`:
-
-      config :website, Portfolio.TMDB, token: "..."
-      config :website, Portfolio.TMDB, req_options: [plug: {Req.Test, Portfolio.TMDB}]
-
-  The poster image base URL defaults to TMDB's long-stable CDN location and can
-  be overridden if TMDB ever changes it:
+  The base URL for images defaults to TMDB's long-stable CDN location.
+  If this ever changes, its configuration can be overridden:
 
       config :website, Portfolio.TMDB, image_base: "https://image.tmdb.org/t/p/"
 
-  TMDB terms require attribution on any page that displays its data; see the
-  movie-night LiveViews for the notice and logo.
+  **Note**: TMDB terms require attribution on any page that displays its data.
   """
 
   @base_url "https://api.themoviedb.org/3"
@@ -43,26 +36,30 @@ defmodule Portfolio.TMDB do
     if String.trim(query) == "" do
       {:ok, %{movies: [], page: 0, total_pages: 0}}
     else
-      with :ok <- ensure_configured(),
-           {:ok, response} <-
-             Req.get(client(),
-               url: "/search/movie",
-               params: [query: query, include_adult: false, page: page]
-             ) do
-        case response.status do
-          200 ->
-            body = response.body
+      handle_search(query, page)
+    end
+  end
 
-            {:ok,
-             %{
-               movies: Enum.map(body["results"] || [], &normalize_movie/1),
-               page: body["page"] || page,
-               total_pages: body["total_pages"] || page
-             }}
+  defp handle_search(query, page) do
+    with :ok <- ensure_configured(),
+         {:ok, response} <-
+           Req.get(client(),
+             url: "/search/movie",
+             params: [query: query, include_adult: false, page: page]
+           ) do
+      case response.status do
+        200 ->
+          body = response.body
 
-          status ->
-            {:error, {:http, status}}
-        end
+          {:ok,
+           %{
+             movies: Enum.map(body["results"] || [], &normalize_movie/1),
+             page: body["page"] || page,
+             total_pages: body["total_pages"] || page
+           }}
+
+        status ->
+          {:error, {:http, status}}
       end
     end
   end
@@ -70,6 +67,7 @@ defmodule Portfolio.TMDB do
   @doc """
   Fetches one movie's details. A missing movie returns `{:error, :not_found}`.
   """
+  @spec get_movie(binary()) :: {:ok, movie()} | {:error, :not_found | {:http, integer()}}
   def get_movie(tmdb_id) do
     with :ok <- ensure_configured(),
          {:ok, response} <- Req.get(client(), url: "/movie/#{tmdb_id}") do
@@ -85,6 +83,7 @@ defmodule Portfolio.TMDB do
   Builds a `w342` poster URL for a TMDB poster path, or nil when there is no
   poster.
   """
+  @spec poster_url(String.t()) :: String.t() | nil
   def poster_url(nil), do: nil
   def poster_url(""), do: nil
 

@@ -117,19 +117,19 @@ defmodule Portfolio.MovieNights do
 
   defp transition(scope, %MovieNight{id: id}, expected, next) do
     if admin?(scope) do
-      transact(id, fn night ->
-        if night.phase == expected do
-          night
-          |> Ecto.Changeset.change(phase: next)
-          |> Repo.update()
-        else
-          {:error, :invalid_phase}
-        end
-      end)
+      transact(id, &advance_phase(&1, expected, next))
     else
       {:error, :unauthorized}
     end
   end
+
+  defp advance_phase(%MovieNight{phase: expected} = night, expected, next) do
+    night
+    |> Ecto.Changeset.change(phase: next)
+    |> Repo.update()
+  end
+
+  defp advance_phase(_night, _expected, _next), do: {:error, :invalid_phase}
 
   @doc """
   Lists a night's candidates in the order they were nominated.
@@ -147,6 +147,8 @@ defmodule Portfolio.MovieNights do
   @doc """
   Nominates a film for a night while it is `nominating`.
   """
+  @spec nominate(Scope.t(), MovieNight.t(), binary()) ::
+          {:ok, Candidate.t()} | {:error, Ecto.Changeset.t() | :invalid_phase | :unauthorized}
   def nominate(nil, %MovieNight{}, _tmdb_id), do: {:error, :unauthorized}
 
   def nominate(%Scope{user: nil}, %MovieNight{}, _tmdb_id), do: {:error, :unauthorized}
@@ -166,6 +168,8 @@ defmodule Portfolio.MovieNights do
   @doc """
   Withdraws a nomination. Only its author can withdraw, only while `nominating`.
   """
+  @spec withdraw_nomination(Scope.t(), Candidate.t()) ::
+          {:ok, Candidate.t()} | {:error, Ecto.Changeset.t() | :invalid_phase | :unauthorized}
   def withdraw_nomination(nil, %Candidate{}), do: {:error, :unauthorized}
 
   def withdraw_nomination(%Scope{user: nil}, %Candidate{}), do: {:error, :unauthorized}
@@ -182,86 +186,91 @@ defmodule Portfolio.MovieNights do
 
   ## Voting
 
+  @max_votes 3
   @doc """
   Toggles a user's vote on a candidate while the night is `voting`.
-  A user may vote for at most 3 distinct candidates per night.
+  A user may vote for at most #{@max_votes} distinct candidates per night.
   """
-  def toggle_vote(nil, %MovieNight{}, _candidate_id), do: {:error, :unauthorized}
+  @spec toggle_vote(Scope.t() | nil, MovieNight.t(), binary()) ::
+          {:ok, :voted | :unvoted}
+          | {:error,
+             :unauthorized | :invalid_phase | :not_found | :vote_limit | Ecto.Changeset.t()}
+  def toggle_vote(%Scope{user: %{id: user_id}}, %MovieNight{id: id}, candidate_id) do
+    id
+    |> transact(&toggle_in_night(&1, candidate_id, user_id))
+    |> notify_vote_change(id)
+  end
 
-  def toggle_vote(%Scope{user: nil}, %MovieNight{}, _candidate_id), do: {:error, :unauthorized}
+  def toggle_vote(_scope, _night, _candidate_id), do: {:error, :unauthorized}
 
-  def toggle_vote(%Scope{user: user}, %MovieNight{id: id}, candidate_id) do
-    result =
-      transact(id, fn locked_night ->
-        if locked_night.phase != "voting" do
-          Repo.rollback(:invalid_phase)
-        else
-          candidate =
-            Repo.one(
-              from(c in Candidate,
-                where: c.id == ^candidate_id and c.movie_night_id == ^id
-              )
-            )
-
-          if is_nil(candidate) do
-            Repo.rollback(:not_found)
-          else
-            existing =
-              Repo.one(
-                from(v in Vote,
-                  where: v.candidate_id == ^candidate.id and v.user_id == ^user.id
-                )
-              )
-
-            if existing do
-              case Repo.delete(existing) do
-                {:ok, _} -> {:ok, :unvoted}
-                {:error, changeset} -> Repo.rollback(changeset)
-              end
-            else
-              count =
-                Repo.aggregate(
-                  from(v in Vote,
-                    join: c in Candidate,
-                    on: v.candidate_id == c.id,
-                    where: c.movie_night_id == ^id and v.user_id == ^user.id
-                  ),
-                  :count
-                )
-
-              if count >= 3 do
-                Repo.rollback(:vote_limit)
-              else
-                case Repo.insert(
-                       %Vote{candidate_id: candidate.id, user_id: user.id}
-                       |> Vote.changeset(%{}),
-                       on_conflict: :nothing
-                     ) do
-                  {:ok, _} -> {:ok, :voted}
-                  {:error, changeset} -> Repo.rollback(changeset)
-                end
-              end
-            end
-          end
-        end
-      end)
-
-    case result do
-      {:ok, :voted} ->
-        broadcast_night(id)
-        {:ok, :voted}
-
-      {:ok, :unvoted} ->
-        broadcast_night(id)
-        {:ok, :unvoted}
-
-      other ->
-        other
+  defp toggle_in_night(night, candidate_id, user_id) do
+    with :ok <- ensure_phase(night, "voting"),
+         {:ok, candidate} <- fetch_candidate(night, candidate_id) do
+      flip_vote(candidate, user_id)
     end
   end
 
-  @doc "Returns a map of candidate_id => vote count for the night."
-  def tallies(_scope, %MovieNight{id: id}) do
+  defp flip_vote(candidate, user_id) do
+    case Repo.get_by(Vote, candidate_id: candidate.id, user_id: user_id) do
+      nil -> cast_vote(candidate, user_id)
+      vote -> remove_vote(vote)
+    end
+  end
+
+  defp cast_vote(candidate, user_id) do
+    with :ok <- ensure_under_limit(candidate.movie_night_id, user_id),
+         {:ok, _vote} <- insert_vote(candidate, user_id) do
+      {:ok, :voted}
+    end
+  end
+
+  defp insert_vote(candidate, user_id) do
+    %Vote{candidate_id: candidate.id, user_id: user_id}
+    |> Vote.changeset(%{})
+    |> Repo.insert(on_conflict: :nothing)
+  end
+
+  defp remove_vote(vote) do
+    with {:ok, _vote} <- Repo.delete(vote), do: {:ok, :unvoted}
+  end
+
+  defp ensure_under_limit(night_id, user_id) do
+    if count_votes(night_id, user_id) < @max_votes, do: :ok, else: {:error, :vote_limit}
+  end
+
+  defp notify_vote_change({:ok, _} = ok, night_id) do
+    broadcast_night(night_id)
+    ok
+  end
+
+  defp notify_vote_change(error, _night_id), do: error
+
+  defp ensure_phase(%MovieNight{phase: phase}, phase), do: :ok
+  defp ensure_phase(_night, _phase), do: {:error, :invalid_phase}
+
+  defp fetch_candidate(%MovieNight{id: id}, candidate_id) do
+    case Repo.get_by(Candidate, id: candidate_id, movie_night_id: id) do
+      nil -> {:error, :not_found}
+      candidate -> {:ok, candidate}
+    end
+  end
+
+  defp count_votes(night_id, user_id) do
+    Repo.aggregate(
+      from(v in Vote,
+        join: c in Candidate,
+        on: v.candidate_id == c.id,
+        where: c.movie_night_id == ^night_id and v.user_id == ^user_id
+      ),
+      :count
+    )
+  end
+
+  @doc """
+  Returns a map of vote counts for the night.
+  """
+  @spec tallies(MovieNight.t()) :: %{binary() => integer()}
+  def tallies(%MovieNight{id: id}) do
     Repo.all(
       from(v in Vote,
         join: c in Candidate,
@@ -308,8 +317,8 @@ defmodule Portfolio.MovieNights do
   end
 
   @doc "Returns all candidates tied for the highest vote count (or [] when no votes)."
-  def winning_candidates(scope, %MovieNight{} = night) do
-    t = tallies(scope, night)
+  def winning_candidates(%MovieNight{} = night) do
+    t = tallies(night)
 
     if map_size(t) == 0 do
       []

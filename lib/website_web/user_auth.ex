@@ -1,4 +1,9 @@
 defmodule PortfolioWeb.UserAuth do
+  @moduledoc """
+  Provides `Conn.Plug` plugs and `Phoenix.LiveView` mount hooks for
+  user authentication and authorization.
+  """
+
   use PortfolioWeb, :verified_routes
 
   import Plug.Conn

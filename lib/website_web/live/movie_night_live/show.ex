@@ -167,7 +167,7 @@ defmodule PortfolioWeb.MovieNightLive.Show do
   defp load_night(socket, scope, night) do
     candidates = MovieNights.list_candidates(night)
     movies = fetch_movies(socket.assigns[:movies] || %{}, Enum.map(candidates, & &1.tmdb_id))
-    tallies = MovieNights.tallies(scope, night)
+    tallies = MovieNights.tallies(night)
     my_votes = MovieNights.my_vote_ids(scope, night)
 
     items =
@@ -183,7 +183,7 @@ defmodule PortfolioWeb.MovieNightLive.Show do
       end)
 
     winners =
-      if night.phase == "done", do: MovieNights.winning_candidates(scope, night), else: []
+      if night.phase == "done", do: MovieNights.winning_candidates(night), else: []
 
     socket
     |> assign(:night, night)

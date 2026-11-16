@@ -126,7 +126,6 @@ defmodule Portfolio.MovieNightsTest do
     test "nominations are visible to every friend" do
       night = movie_night_fixture()
       author = Scope.for_user(user_fixture())
-      other = Scope.for_user(user_fixture())
 
       assert {:ok, candidate} = MovieNights.nominate(author, night, 550)
       assert [%Candidate{id: id}] = MovieNights.list_candidates(night)
@@ -240,9 +239,9 @@ defmodule Portfolio.MovieNightsTest do
       MovieNights.toggle_vote(u2, night, b.id)
       MovieNights.toggle_vote(u3, night, c.id)
 
-      assert MovieNights.tallies(admin_scope(), night) == %{a.id => 2, b.id => 2, c.id => 1}
+      assert MovieNights.tallies(night) == %{a.id => 2, b.id => 2, c.id => 1}
 
-      assert Enum.sort(Enum.map(MovieNights.winning_candidates(admin_scope(), night), & &1.id)) ==
+      assert Enum.sort(Enum.map(MovieNights.winning_candidates(night), & &1.id)) ==
                Enum.sort([a.id, b.id])
     end
 
@@ -286,14 +285,14 @@ defmodule Portfolio.MovieNightsTest do
 
     test "winning_candidates is empty when nobody voted" do
       {night, _} = voting_night_with_candidates(2)
-      assert MovieNights.winning_candidates(admin_scope(), night) == []
+      assert MovieNights.winning_candidates(night) == []
     end
 
     test "a single winner" do
       {night, [a, _b]} = voting_night_with_candidates(2)
       scope = Scope.for_user(user_fixture())
       MovieNights.toggle_vote(scope, night, a.id)
-      assert [winner] = MovieNights.winning_candidates(scope, night)
+      assert [winner] = MovieNights.winning_candidates(night)
       assert winner.id == a.id
     end
 
@@ -316,7 +315,7 @@ defmodule Portfolio.MovieNightsTest do
       assert MovieNights.votes_used(scope1, night1) == 1
       assert MovieNights.votes_used(scope2, night1) == 0
       assert MovieNights.votes_used(scope1, night2) == 0
-      assert MovieNights.tallies(scope1, night2) == %{}
+      assert MovieNights.tallies(night2) == %{}
       _ = a2
     end
 

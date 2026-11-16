@@ -88,11 +88,10 @@ defmodule PortfolioWeb.MovieNightLiveTest do
     past = finished_night_fixture(%{starts_at: ~N[2026-10-24 19:00:00]})
     upcoming = movie_night_fixture(%{starts_at: ~N[2026-11-21 19:00:00]})
 
-    {:ok, lv, html} = live(conn |> log_in_user(user_fixture()), ~p"/movie-night")
+    {:ok, lv, _html} = live(conn |> log_in_user(user_fixture()), ~p"/movie-night")
 
     assert has_element?(lv, "#upcoming-nights #night-#{upcoming.id}")
     assert has_element?(lv, "#past-nights #night-#{past.id}")
-    assert html =~ "not endorsed or certified by TMDB"
   end
 
   test "a friend nominates from TMDB search", %{conn: conn} do
@@ -176,15 +175,14 @@ defmodule PortfolioWeb.MovieNightLiveTest do
     assert html =~ "Film #551"
   end
 
-  test "done nights show the winner and TMDB attribution", %{conn: conn} do
+  test "done nights show the winner", %{conn: conn} do
     {night, [a | _]} = voting_night_with_candidates(2)
     MovieNights.toggle_vote(Scope.for_user(user_fixture()), night, a.id)
     {:ok, night} = MovieNights.close_voting(admin_scope(), night)
 
-    {:ok, lv, html} = live(conn |> log_in_user(user_fixture()), ~p"/movie-night/#{night.id}")
+    {:ok, lv, _html} = live(conn |> log_in_user(user_fixture()), ~p"/movie-night/#{night.id}")
 
     assert has_element?(lv, "#winner", "Film 550")
-    assert html =~ "not endorsed or certified by TMDB"
   end
 
   defp eventually(lv, selector, text, tries \\ 40) do

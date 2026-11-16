@@ -1,4 +1,6 @@
 defmodule Portfolio.Accounts.UserNotifier do
+  @moduledoc "Basic templates and functions for sending user account related emails."
+
   import Swoosh.Email
 
   alias Portfolio.Mailer

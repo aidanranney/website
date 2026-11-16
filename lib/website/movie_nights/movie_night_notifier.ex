@@ -1,4 +1,6 @@
 defmodule Portfolio.MovieNights.MovieNightNotifier do
+  @moduledoc "Basic templates and functions for sending movie night related emails."
+
   import Swoosh.Email
 
   alias Portfolio.Mailer
@@ -6,7 +8,7 @@ defmodule Portfolio.MovieNights.MovieNightNotifier do
   alias Portfolio.MovieNights.MovieNight
 
   @doc """
-  Deliver instructions to update a user email.
+  Deliver instructions to remind a user of an upcoming movie night  .
   """
   @spec deliver_movie_night_reminder(User.t(), MovieNight.t()) ::
           {:ok, String.t()} | {:error, term()}
@@ -19,7 +21,7 @@ defmodule Portfolio.MovieNights.MovieNightNotifier do
 
     There's an upcoming movie night happening!
 
-    Starts at: #{DateTime.to_iso8601(movie_night.starts_at)}
+    Starts at: #{Calendar.strftime(movie_night.starts_at, "%A, %B %-d at %-I:%M %p")}
     Notes: #{movie_night.note}
 
     ==============================

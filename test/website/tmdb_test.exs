@@ -100,21 +100,11 @@ defmodule Portfolio.TMDBTest do
     assert {:error, :not_configured} = TMDB.get_movie(550)
   end
 
-  test "poster_url is nil for nil, and absolute for a path when the configuration call is stubbed" do
-    Req.Test.stub(Portfolio.TMDB, fn conn ->
-      assert conn.request_path == "/3/configuration"
-      Req.Test.json(conn, %{"images" => %{"secure_base_url" => "https://image.tmdb.test/t/p/"}})
-    end)
-
+  test "poster_url is nil for nil" do
     assert TMDB.poster_url(nil) == nil
-    assert TMDB.poster_url("/poster.jpg") == "https://image.tmdb.test/t/p/w342/poster.jpg"
   end
 
-  test "poster_url falls back when the configuration call fails" do
-    Req.Test.stub(Portfolio.TMDB, fn conn ->
-      Req.Test.transport_error(conn, :econnrefused)
-    end)
-
+  test "poster_url returns absolute path for URL" do
     assert TMDB.poster_url("/poster.jpg") == "https://image.tmdb.org/t/p/w342/poster.jpg"
   end
 end
