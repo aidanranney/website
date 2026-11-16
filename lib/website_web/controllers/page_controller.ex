@@ -9,10 +9,6 @@ defmodule PortfolioWeb.PageController do
     render(conn, :about, page_title: "About")
   end
 
-  def projects(conn, _params) do
-    render(conn, :projects, page_title: "Projects")
-  end
-
   def contact(conn, _params) do
     render(conn, :contact, page_title: "Contact")
   end

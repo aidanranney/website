@@ -5,7 +5,7 @@ defmodule PortfolioWeb.UserLive.Settings do
 
   alias Portfolio.Accounts
 
-  @impl true
+  @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
@@ -69,7 +69,7 @@ defmodule PortfolioWeb.UserLive.Settings do
     """
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def mount(%{"token" => token}, _session, socket) do
     socket =
       case Accounts.update_user_email(socket.assigns.current_scope.user, token) do
@@ -98,7 +98,7 @@ defmodule PortfolioWeb.UserLive.Settings do
     {:ok, socket}
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def handle_event("validate_email", params, socket) do
     %{"user" => user_params} = params
 

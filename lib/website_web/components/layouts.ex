@@ -31,6 +31,8 @@ defmodule PortfolioWeb.Layouts do
     default: nil,
     doc: "the current [scope](https://phoenix.hexdocs.pm/scopes.html)"
 
+  attr :wide, :boolean, default: false, doc: "use the wider content column"
+
   slot :inner_block, required: true
 
   def app(assigns) do
@@ -43,16 +45,23 @@ defmodule PortfolioWeb.Layouts do
 
         <nav class="flex items-center gap-6 text-sm text-zinc-600">
           <.link navigate={~p"/about"} class="transition-colors hover:text-zinc-900">About</.link>
-          <.link navigate={~p"/projects"} class="transition-colors hover:text-zinc-900">
-            Projects
-          </.link>
           <.link navigate={~p"/contact"} class="transition-colors hover:text-zinc-900">
             Contact
           </.link>
           <span class="h-4 w-px bg-zinc-200" aria-hidden="true"></span>
           <%= if @current_scope && @current_scope.user do %>
+            <.link href={~p"/movie-night"} class="transition-colors hover:text-zinc-900">
+              Movie night
+            </.link>
             <.link href={~p"/users/settings"} class="transition-colors hover:text-zinc-900">
               Settings
+            </.link>
+            <.link
+              :if={Portfolio.Accounts.Scope.admin?(@current_scope)}
+              href={~p"/admin"}
+              class="transition-colors hover:text-zinc-900"
+            >
+              Admin
             </.link>
             <.link
               href={~p"/users/log-out"}
@@ -73,7 +82,7 @@ defmodule PortfolioWeb.Layouts do
       </div>
     </header>
 
-    <main class="mx-auto max-w-2xl px-6 py-16 sm:py-24">
+    <main class={["mx-auto px-6 py-16 sm:py-24", if(@wide, do: "max-w-5xl", else: "max-w-2xl")]}>
       {render_slot(@inner_block)}
     </main>
 

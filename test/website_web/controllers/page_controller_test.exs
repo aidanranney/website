@@ -12,10 +12,6 @@ defmodule PortfolioWeb.PageControllerTest do
     assert conn |> get(~p"/about") |> html_response(200) =~ "About"
   end
 
-  test "GET /projects renders", %{conn: conn} do
-    assert conn |> get(~p"/projects") |> html_response(200) =~ "Projects"
-  end
-
   test "GET /contact renders a mailto link", %{conn: conn} do
     assert conn |> get(~p"/contact") |> html_response(200) =~ "mailto:"
   end
@@ -24,7 +20,6 @@ defmodule PortfolioWeb.PageControllerTest do
     html = conn |> get(~p"/") |> html_response(200)
     assert html =~ "Aidan Ranney"
     assert html =~ ~s(href="/about")
-    assert html =~ ~s(href="/projects")
     assert html =~ ~s(href="/contact")
   end
 

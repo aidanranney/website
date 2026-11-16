@@ -194,6 +194,10 @@ defmodule PortfolioWeb.UserAuth do
       on user_token.
       Redirects to login page if there's no logged user.
 
+    * `:require_admin` - Authenticates the user from the session, assigns the
+      current_scope, and redirects unless `Scope.admin?/1` holds for it.
+      Redirects to login page if there's no logged user, otherwise home.
+
   ## Examples
 
   Use the `on_mount` lifecycle macro in LiveViews to mount or authenticate
@@ -231,7 +235,7 @@ defmodule PortfolioWeb.UserAuth do
     end
   end
 
-  def on_mount(:require_verified, _params, session, socket) do
+  def on_mount(:require_admin, _params, session, socket) do
     socket = mount_current_scope(socket, session)
     scope = socket.assigns.current_scope
 
@@ -244,17 +248,13 @@ defmodule PortfolioWeb.UserAuth do
 
         {:halt, socket}
 
-      scope.user.confirmed_at ->
+      Scope.admin?(scope) ->
         {:cont, socket}
 
       true ->
-        # shortcut: any confirmed registrant reaches /admin; upgrade when admin does real work
         socket =
           socket
-          |> Phoenix.LiveView.put_flash(
-            :error,
-            "Please confirm your email address to access this page."
-          )
+          |> Phoenix.LiveView.put_flash(:error, "This area is restricted.")
           |> Phoenix.LiveView.redirect(to: ~p"/")
 
         {:halt, socket}

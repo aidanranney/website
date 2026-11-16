@@ -348,6 +348,43 @@ defmodule PortfolioWeb.CoreComponents do
   end
 
   @doc """
+  Renders a phase badge for a movie night.
+  """
+  attr :phase, :string, required: true
+
+  def phase_badge(assigns) do
+    ~H"""
+    <span class={[
+      "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize",
+      @phase == "nominating" && "bg-amber-100 text-amber-800",
+      @phase == "voting" && "bg-emerald-100 text-emerald-800",
+      @phase == "done" && "bg-zinc-100 text-zinc-600"
+    ]}>
+      {@phase}
+    </span>
+    """
+  end
+
+  @doc """
+  Renders the TMDB attribution required by the TMDB API terms.
+  """
+  attr :class, :any, default: nil
+
+  def tmdb_attribution(assigns) do
+    ~H"""
+    <footer class={[
+      "mt-12 flex items-start gap-3 border-t border-zinc-200 pt-6 text-xs text-zinc-500",
+      @class
+    ]}>
+      <img src="/images/tmdb-logo.svg" alt="TMDB" class="h-6 w-auto shrink-0" />
+      <p>
+        This product uses TMDB.
+      </p>
+    </footer>
+    """
+  end
+
+  @doc """
   Renders a table with generic styling.
 
   ## Examples

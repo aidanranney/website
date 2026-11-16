@@ -63,7 +63,9 @@ defmodule Portfolio.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 1.0"},
       {:jason, "~> 1.2"},
-      {:swoosh, "~> 1.16"},
+      {:req, "~> 0.6"},
+      {:swoosh, "~> 1.29.3"},
+      {:gen_smtp, "~> 1.3"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:tidewave, "~> 0.9", only: :dev}

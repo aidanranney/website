@@ -74,4 +74,4 @@ config :phoenix_live_view,
   enable_expensive_runtime_checks: true
 
 # Preview confirmation and reset emails at http://localhost:4000/dev/mailbox
-config :website, Portfolio.Mailer, adapter: Swoosh.Adapters.Local
+# config :website, Portfolio.Mailer, adapter: Swoosh.Adapters.Local

@@ -38,3 +38,7 @@ config :phoenix,
   sort_verified_routes_query_params: true
 
 config :website, Portfolio.Mailer, adapter: Swoosh.Adapters.Test
+
+config :website, Portfolio.TMDB,
+  token: "test-token",
+  req_options: [plug: {Req.Test, Portfolio.TMDB}]

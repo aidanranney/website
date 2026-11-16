@@ -4,7 +4,7 @@ defmodule PortfolioWeb.UserLive.Registration do
   alias Portfolio.Accounts
   alias Portfolio.Accounts.User
 
-  @impl true
+  @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
@@ -42,7 +42,7 @@ defmodule PortfolioWeb.UserLive.Registration do
     """
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def mount(_params, _session, %{assigns: %{current_scope: %{user: user}}} = socket)
       when not is_nil(user) do
     {:ok, redirect(socket, to: PortfolioWeb.UserAuth.signed_in_path(socket))}
@@ -54,7 +54,7 @@ defmodule PortfolioWeb.UserLive.Registration do
     {:ok, assign_form(socket, changeset), temporary_assigns: [form: nil]}
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def handle_event("save", %{"user" => user_params}, socket) do
     case Accounts.register_user(user_params) do
       {:ok, user} ->

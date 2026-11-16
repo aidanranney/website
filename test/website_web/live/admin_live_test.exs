@@ -8,15 +8,14 @@ defmodule PortfolioWeb.AdminLiveTest do
     assert {:error, {:redirect, %{to: "/users/log-in"}}} = live(conn, ~p"/admin")
   end
 
-  test "redirects unconfirmed users home", %{conn: conn} do
-    conn = log_in_user(conn, unconfirmed_user_fixture())
+  test "redirects non-admin users home", %{conn: conn} do
+    conn = log_in_user(conn, user_fixture())
     assert {:error, {:redirect, %{to: "/"}}} = live(conn, ~p"/admin")
   end
 
-  test "renders for confirmed users", %{conn: conn} do
-    conn = log_in_user(conn, user_fixture())
+  test "renders for admins", %{conn: conn} do
+    conn = log_in_user(conn, admin_user_fixture())
     {:ok, _lv, html} = live(conn, ~p"/admin")
     assert html =~ "Admin"
-    assert html =~ "Nothing here yet"
   end
 end

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" role="img" aria-labelledby="tmdb-logo-title">
+  <title id="tmdb-logo-title">TMDB</title>
+  <rect width="120" height="40" rx="6" fill="#0d253f"/>
+  <text x="10" y="27" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="1" fill="#01b4e4">TMDB</text>
+</svg>

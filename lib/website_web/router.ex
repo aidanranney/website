@@ -22,15 +22,17 @@ defmodule PortfolioWeb.Router do
 
     get "/", PageController, :home
     get "/about", PageController, :about
-    get "/projects", PageController, :projects
     get "/contact", PageController, :contact
   end
 
   scope "/admin", PortfolioWeb do
     pipe_through :browser
 
-    live_session :admin, on_mount: [{PortfolioWeb.UserAuth, :require_verified}] do
+    live_session :admin, on_mount: [{PortfolioWeb.UserAuth, :require_admin}] do
       live "/", AdminLive, :index
+      live "/movie-nights", AdminMovieNightLive, :index
+      live "/movie-nights/new", AdminMovieNightLive, :new
+      live "/movie-nights/:id/edit", AdminMovieNightLive, :edit
     end
   end
 
@@ -65,6 +67,8 @@ defmodule PortfolioWeb.Router do
       on_mount: [{PortfolioWeb.UserAuth, :require_authenticated}] do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
+      live "/movie-night", MovieNightLive.Index, :index
+      live "/movie-night/:id", MovieNightLive.Show, :show
     end
 
     post "/users/update-password", UserSessionController, :update_password

@@ -23,6 +23,30 @@ end
 config :website, PortfolioWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+if token = System.get_env("TMDB_READ_TOKEN") do
+  config :website, Portfolio.TMDB, token: token
+end
+
+# Configure email delivery for confirmation and password-reset messages.
+config :website, Portfolio.Mailer,
+  adapter: Swoosh.Adapters.SMTP,
+  relay: System.get_env("SMTP_HOST"),
+  username: System.get_env("SMTP_USERNAME"),
+  password: System.get_env("SMTP_PASSWORD"),
+  port: 587,
+  tls: :always,
+  auth: :always,
+  tls_options: [
+    versions: [:"tlsv1.2", :"tlsv1.3"],
+    verify: :verify_peer,
+    cacerts: :public_key.cacerts_get(),
+    server_name_indication: ~c"smtp.mail.me.com",
+    depth: 99,
+    customize_hostname_check: [
+      match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
+    ]
+  ]
+
 if config_env() == :dev do
   # Reload browser tabs when matching files change.
   config :website, PortfolioWeb.Endpoint,
@@ -84,17 +108,6 @@ if config_env() == :prod do
       ip: {0, 0, 0, 0, 0, 0, 0, 0}
     ],
     secret_key_base: secret_key_base
-
-  # Configure email delivery for confirmation and password-reset messages.
-  # Add an adapter (e.g. Swoosh.Adapters.SMTP with the gen_smtp package, or an
-  # HTTP provider such as Mailgun/SendGrid) and the credentials it needs here.
-  # Until configured, confirmation emails are not delivered in production.
-  #
-  # config :website, Portfolio.Mailer,
-  #   adapter: Swoosh.Adapters.SMTP,
-  #   relay: System.get_env("SMTP_HOST"),
-  #   username: System.get_env("SMTP_USERNAME"),
-  #   password: System.get_env("SMTP_PASSWORD")
 
   # ## SSL Support
   #

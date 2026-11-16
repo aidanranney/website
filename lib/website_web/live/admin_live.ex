@@ -5,7 +5,9 @@ defmodule PortfolioWeb.AdminLive do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <.header>Admin</.header>
-      <p class="text-zinc-600">Nothing here yet.</p>
+      <ul>
+        <li><.link navigate={~p"/admin/movie-nights"}>Manage movie nights</.link></li>
+      </ul>
     </Layouts.app>
     """
   end

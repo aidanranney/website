@@ -3,7 +3,7 @@ defmodule PortfolioWeb.UserLive.Confirmation do
 
   alias Portfolio.Accounts
 
-  @impl true
+  @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
@@ -75,7 +75,7 @@ defmodule PortfolioWeb.UserLive.Confirmation do
     """
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def mount(%{"token" => token}, _session, socket) do
     if user = Accounts.get_user_by_magic_link_token(token) do
       form = to_form(%{"token" => token}, as: "user")
@@ -90,7 +90,7 @@ defmodule PortfolioWeb.UserLive.Confirmation do
     end
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def handle_event("submit", %{"user" => params}, socket) do
     {:noreply, assign(socket, form: to_form(params, as: "user"), trigger_submit: true)}
   end

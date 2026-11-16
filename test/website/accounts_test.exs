@@ -4,7 +4,7 @@ defmodule Portfolio.AccountsTest do
   alias Portfolio.Accounts
 
   import Portfolio.AccountsFixtures
-  alias Portfolio.Accounts.{User, UserToken}
+  alias Portfolio.Accounts.{Scope, User, UserToken}
 
   describe "get_user_by_email/1" do
     test "does not return the user if the email does not exist" do
@@ -386,6 +386,14 @@ defmodule Portfolio.AccountsTest do
       assert user_token.user_id == user.id
       assert user_token.sent_to == user.email
       assert user_token.context == "login"
+    end
+  end
+
+  describe "Scope.admin?/1" do
+    test "is true only for an admin user" do
+      assert Scope.admin?(Scope.for_user(admin_user_fixture()))
+      refute Scope.admin?(Scope.for_user(user_fixture()))
+      refute Scope.admin?(Scope.for_user(nil))
     end
   end
 

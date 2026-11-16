@@ -20,14 +20,24 @@ defmodule Portfolio.Accounts.Scope do
 
   defstruct user: nil
 
+  @type t :: %__MODULE__{user: User.t() | nil}
+
   @doc """
   Creates a scope for the given user.
 
   Returns nil if no user is given.
   """
+  @spec for_user(User.t()) :: t()
   def for_user(%User{} = user) do
     %__MODULE__{user: user}
   end
 
   def for_user(nil), do: nil
+
+  @doc """
+  Returns true if the scope belongs to an admin user.
+  """
+  @spec admin?(t()) :: boolean()
+  def admin?(%__MODULE__{user: %User{admin: true}}), do: true
+  def admin?(_scope), do: false
 end

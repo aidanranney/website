@@ -1,0 +1,356 @@
+defmodule Portfolio.MovieNights do
+  @moduledoc """
+  The MovieNights context.
+
+  Movie nights move forward through phases only: `nominating` → `voting` → `done`.
+  Admin writes broadcast on `"movie_nights"` and `"movie_nights:<id>"`.
+  """
+
+  import Ecto.Query, warn: false
+  alias Portfolio.Repo
+
+  alias Portfolio.Accounts.Scope
+  alias Portfolio.MovieNights.Candidate
+  alias Portfolio.MovieNights.MovieNight
+  alias Portfolio.MovieNights.Vote
+
+  @all_topic "movie_nights"
+
+  ## Reads
+
+  @doc """
+  Lists movie nights: upcoming and open nights first, ascending by start,
+  then finished nights, newest first. Candidates are preloaded.
+  """
+  def list_movie_nights(_scope) do
+    upcoming =
+      Repo.all(
+        from n in MovieNight,
+          where: n.phase != "done",
+          order_by: [asc: n.starts_at],
+          preload: [:candidates]
+      )
+
+    done =
+      Repo.all(
+        from n in MovieNight,
+          where: n.phase == "done",
+          order_by: [desc: n.starts_at],
+          preload: [:candidates]
+      )
+
+    upcoming ++ done
+  end
+
+  @doc """
+  Gets a single movie night, or nil.
+  """
+  def get_movie_night(_scope, id), do: Repo.get(MovieNight, id)
+
+  ## Admin CRUD
+
+  @doc """
+  Creates a movie night. Admin only.
+  """
+  def create_movie_night(scope, attrs) do
+    if admin?(scope) do
+      %MovieNight{}
+      |> MovieNight.changeset(attrs)
+      |> Repo.insert()
+      |> broadcast()
+    else
+      {:error, :unauthorized}
+    end
+  end
+
+  @doc """
+  Updates a movie night's schedule and note. Admin only.
+  """
+  def update_movie_night(scope, %MovieNight{} = night, attrs) do
+    if admin?(scope) do
+      night
+      |> MovieNight.changeset(attrs)
+      |> Repo.update()
+      |> broadcast()
+    else
+      {:error, :unauthorized}
+    end
+  end
+
+  @doc """
+  Deletes a movie night and, by cascade, its candidates and votes. Admin only.
+  """
+  def delete_movie_night(scope, %MovieNight{} = night) do
+    if admin?(scope) do
+      night
+      |> Repo.delete()
+      |> broadcast()
+    else
+      {:error, :unauthorized}
+    end
+  end
+
+  ## Phases
+
+  @doc """
+  Locks nominations, moving a night from `nominating` to `voting`. Admin only.
+  """
+  def lock_nominations(scope, %MovieNight{} = night) do
+    transition(scope, night, "nominating", "voting")
+  end
+
+  @doc """
+  Closes voting, moving a night from `voting` to `done`. Admin only.
+  """
+  def close_voting(scope, %MovieNight{} = night) do
+    transition(scope, night, "voting", "done")
+  end
+
+  defp transition(scope, %MovieNight{id: id}, expected, next) do
+    if admin?(scope) do
+      transact(id, fn night ->
+        if night.phase == expected do
+          night
+          |> Ecto.Changeset.change(phase: next)
+          |> Repo.update()
+        else
+          {:error, :invalid_phase}
+        end
+      end)
+    else
+      {:error, :unauthorized}
+    end
+  end
+
+  ## Nominations
+
+  @doc """
+  Lists a night's candidates in the order they were nominated.
+  """
+  def list_candidates(_scope, %MovieNight{id: id}) do
+    Repo.all(
+      from c in Candidate,
+        where: c.movie_night_id == ^id,
+        order_by: [asc: c.inserted_at]
+    )
+  end
+
+  @doc """
+  Nominates a film for a night while it is `nominating`.
+  """
+  def nominate(nil, %MovieNight{}, _tmdb_id), do: {:error, :unauthorized}
+
+  def nominate(%Scope{user: nil}, %MovieNight{}, _tmdb_id), do: {:error, :unauthorized}
+
+  def nominate(%Scope{user: user}, %MovieNight{id: id}, tmdb_id) do
+    transact(id, fn night ->
+      if night.phase == "nominating" do
+        %Candidate{movie_night_id: night.id, nominated_by_id: user.id}
+        |> Candidate.changeset(%{tmdb_id: tmdb_id})
+        |> Repo.insert()
+      else
+        {:error, :invalid_phase}
+      end
+    end)
+  end
+
+  @doc """
+  Withdraws a nomination. Only its author can withdraw, only while `nominating`.
+  """
+  def withdraw_nomination(nil, %Candidate{}), do: {:error, :unauthorized}
+
+  def withdraw_nomination(%Scope{user: nil}, %Candidate{}), do: {:error, :unauthorized}
+
+  def withdraw_nomination(%Scope{user: user}, %Candidate{} = candidate) do
+    transact(candidate.movie_night_id, fn night ->
+      cond do
+        candidate.nominated_by_id != user.id -> {:error, :unauthorized}
+        night.phase != "nominating" -> {:error, :invalid_phase}
+        true -> Repo.delete(candidate)
+      end
+    end)
+  end
+
+  ## Voting
+
+  @doc """
+  Toggles a user's vote on a candidate while the night is `voting`.
+  A user may vote for at most 3 distinct candidates per night.
+  """
+  def toggle_vote(nil, %MovieNight{}, _candidate_id), do: {:error, :unauthorized}
+
+  def toggle_vote(%Scope{user: nil}, %MovieNight{}, _candidate_id), do: {:error, :unauthorized}
+
+  def toggle_vote(%Scope{user: user}, %MovieNight{id: id}, candidate_id) do
+    result =
+      transact(id, fn locked_night ->
+        if locked_night.phase != "voting" do
+          Repo.rollback(:invalid_phase)
+        else
+          candidate =
+            Repo.one(
+              from c in Candidate,
+                where: c.id == ^candidate_id and c.movie_night_id == ^id
+            )
+
+          if is_nil(candidate) do
+            Repo.rollback(:not_found)
+          else
+            existing =
+              Repo.one(
+                from v in Vote,
+                  where: v.candidate_id == ^candidate.id and v.user_id == ^user.id
+              )
+
+            if existing do
+              case Repo.delete(existing) do
+                {:ok, _} -> {:ok, :unvoted}
+                {:error, changeset} -> Repo.rollback(changeset)
+              end
+            else
+              count =
+                Repo.aggregate(
+                  from(v in Vote,
+                    join: c in Candidate,
+                    on: v.candidate_id == c.id,
+                    where: c.movie_night_id == ^id and v.user_id == ^user.id
+                  ),
+                  :count
+                )
+
+              if count >= 3 do
+                Repo.rollback(:vote_limit)
+              else
+                case Repo.insert(
+                       %Vote{candidate_id: candidate.id, user_id: user.id}
+                       |> Vote.changeset(%{}),
+                       on_conflict: :nothing
+                     ) do
+                  {:ok, _} -> {:ok, :voted}
+                  {:error, changeset} -> Repo.rollback(changeset)
+                end
+              end
+            end
+          end
+        end
+      end)
+
+    case result do
+      {:ok, :voted} ->
+        broadcast_night(id)
+        {:ok, :voted}
+
+      {:ok, :unvoted} ->
+        broadcast_night(id)
+        {:ok, :unvoted}
+
+      other ->
+        other
+    end
+  end
+
+  @doc "Returns a map of candidate_id => vote count for the night."
+  def tallies(_scope, %MovieNight{id: id}) do
+    Repo.all(
+      from v in Vote,
+        join: c in Candidate,
+        on: v.candidate_id == c.id,
+        where: c.movie_night_id == ^id,
+        group_by: v.candidate_id,
+        select: {v.candidate_id, count(v.id)}
+    )
+    |> Map.new()
+  end
+
+  @doc "Counts the scope user's votes for the night."
+  def votes_used(nil, _night), do: 0
+
+  def votes_used(%Scope{user: nil}, _night), do: 0
+
+  def votes_used(%Scope{user: %{id: user_id}}, %MovieNight{id: id}) do
+    Repo.aggregate(
+      from(v in Vote,
+        join: c in Candidate,
+        on: v.candidate_id == c.id,
+        where: c.movie_night_id == ^id and v.user_id == ^user_id
+      ),
+      :count
+    )
+  end
+
+  @doc "Returns a MapSet of the scope user's voted candidate ids for the night."
+  def my_vote_ids(nil, _night), do: MapSet.new()
+
+  def my_vote_ids(%Scope{user: nil}, _night), do: MapSet.new()
+
+  def my_vote_ids(%Scope{user: %{id: user_id}}, %MovieNight{id: id}) do
+    Repo.all(
+      from v in Vote,
+        join: c in Candidate,
+        on: v.candidate_id == c.id,
+        where: c.movie_night_id == ^id and v.user_id == ^user_id,
+        select: v.candidate_id
+    )
+    |> MapSet.new()
+  end
+
+  @doc "Returns all candidates tied for the highest vote count (or [] when no votes)."
+  def winning_candidates(scope, %MovieNight{} = night) do
+    t = tallies(scope, night)
+
+    if map_size(t) == 0 do
+      []
+    else
+      max_count = t |> Map.values() |> Enum.max()
+
+      winner_ids =
+        t
+        |> Enum.filter(fn {_id, count} -> count == max_count end)
+        |> Enum.map(fn {id, _} -> id end)
+
+      Repo.all(
+        from c in Candidate,
+          where: c.id in ^winner_ids,
+          order_by: [asc: c.inserted_at]
+      )
+    end
+  end
+
+  defp transact(id, fun) do
+    Repo.transact(fn -> fun.(for_update(id)) end)
+    |> broadcast()
+  end
+
+  defp for_update(id) do
+    Repo.one!(from n in MovieNight, where: n.id == ^id, lock: "FOR UPDATE")
+  end
+
+  ## PubSub
+
+  @doc "Subscribes to changes across all movie nights."
+  def subscribe_all, do: Phoenix.PubSub.subscribe(Portfolio.PubSub, @all_topic)
+
+  @doc "Subscribes to changes for a single movie night."
+  def subscribe_night(id), do: Phoenix.PubSub.subscribe(Portfolio.PubSub, night_topic(id))
+
+  defp night_topic(id), do: "movie_nights:#{id}"
+
+  defp broadcast({:ok, %MovieNight{id: id}} = result) do
+    broadcast_night(id)
+    result
+  end
+
+  defp broadcast({:ok, %Candidate{movie_night_id: id}} = result) do
+    broadcast_night(id)
+    result
+  end
+
+  defp broadcast(error), do: error
+
+  defp broadcast_night(id) do
+    Phoenix.PubSub.broadcast(Portfolio.PubSub, @all_topic, {:movie_nights_changed})
+    Phoenix.PubSub.broadcast(Portfolio.PubSub, night_topic(id), {:movie_night_changed, id})
+  end
+
+  defp admin?(scope), do: Scope.admin?(scope)
+end
