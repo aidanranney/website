@@ -14,9 +14,10 @@ defmodule PortfolioWeb.MovieNightLive.Index do
 
   defp load_nights(socket) do
     {upcoming, past} =
-      socket.assigns.current_scope
-      |> MovieNights.list_movie_nights()
-      |> Enum.split_with(&(&1.phase != "done"))
+      Enum.split_with(
+        MovieNights.list_movie_nights(),
+        &(&1.phase != "done")
+      )
 
     assign(socket, upcoming: upcoming, past: past)
   end

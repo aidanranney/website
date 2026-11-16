@@ -66,7 +66,7 @@ defmodule PortfolioWeb.AdminMovieNightLiveTest do
     assert html =~ "Dec 5, 2026"
     assert html =~ "Changed note"
 
-    assert MovieNights.get_movie_night(admin_scope(), night.id).starts_at ==
+    assert MovieNights.get_movie_night(night.id).starts_at ==
              ~N[2026-12-05 20:30:00]
   end
 
@@ -77,11 +77,11 @@ defmodule PortfolioWeb.AdminMovieNightLiveTest do
 
     assert has_element?(lv, "#lock-nominations")
     lv |> element("#lock-nominations") |> render_click()
-    assert MovieNights.get_movie_night(admin_scope(), night.id).phase == "voting"
+    assert MovieNights.get_movie_night(night.id).phase == "voting"
     assert has_element?(lv, "#close-voting")
 
     lv |> element("#close-voting") |> render_click()
-    assert MovieNights.get_movie_night(admin_scope(), night.id).phase == "done"
+    assert MovieNights.get_movie_night(night.id).phase == "done"
     refute has_element?(lv, "#close-voting")
   end
 

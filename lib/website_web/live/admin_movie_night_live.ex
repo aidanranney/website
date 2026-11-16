@@ -10,14 +10,13 @@ defmodule PortfolioWeb.AdminMovieNightLive do
 
     {:ok,
      socket
-     |> assign(:nights, MovieNights.list_movie_nights(socket.assigns.current_scope))
+     |> assign(:nights, MovieNights.list_movie_nights())
      |> prepare(params)}
   end
 
   @impl Phoenix.LiveView
   def handle_info({:movie_nights_changed}, socket) do
-    {:noreply,
-     assign(socket, :nights, MovieNights.list_movie_nights(socket.assigns.current_scope))}
+    {:noreply, assign(socket, :nights, MovieNights.list_movie_nights())}
   end
 
   @impl Phoenix.LiveView
@@ -40,7 +39,7 @@ defmodule PortfolioWeb.AdminMovieNightLive do
         {:noreply,
          socket
          |> put_flash(:info, gettext("Movie night saved."))
-         |> assign(:nights, MovieNights.list_movie_nights(scope))
+         |> assign(:nights, MovieNights.list_movie_nights())
          |> assign(:form, to_form(MovieNight.changeset(%MovieNight{}, %{})))}
 
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -89,16 +88,16 @@ defmodule PortfolioWeb.AdminMovieNightLive do
       {:ok, night} ->
         case MovieNights.close_voting(socket.assigns.current_scope, night) do
           {:ok, night} ->
-            {:noreply, refresh_night(socket, night, "Voting closed.")}
+            {:noreply, refresh_night(socket, night, gettext("Voting closed."))}
 
           {:error, :invalid_phase} ->
-            {:noreply, put_flash(socket, :error, "Voting is not open.")}
+            {:noreply, put_flash(socket, :error, gettext("Voting is not open."))}
 
           {:error, :unauthorized} ->
-            {:noreply, put_flash(socket, :error, "Only an admin can do that.")}
+            {:noreply, put_flash(socket, :error, gettext("Only an admin can do that."))}
 
           {:error, _} ->
-            {:noreply, put_flash(socket, :error, "Could not close voting.")}
+            {:noreply, put_flash(socket, :error, gettext("Could not close voting."))}
         end
     end
   end
@@ -107,23 +106,23 @@ defmodule PortfolioWeb.AdminMovieNightLive do
   def handle_event("delete", _params, socket) do
     case selected_night(socket) do
       :error ->
-        {:noreply, put_flash(socket, :error, "Select a movie night first.")}
+        {:noreply, put_flash(socket, :error, gettext("Select a movie night first."))}
 
       {:ok, night} ->
         case MovieNights.delete_movie_night(socket.assigns.current_scope, night) do
           {:ok, _night} ->
             {:noreply,
              socket
-             |> put_flash(:info, "Movie night deleted.")
-             |> assign(:nights, MovieNights.list_movie_nights(socket.assigns.current_scope))
+             |> put_flash(:info, gettext("Movie night deleted."))
+             |> assign(:nights, MovieNights.list_movie_nights())
              |> assign(:night, %MovieNight{})
              |> assign(:form, to_form(MovieNight.changeset(%MovieNight{}, %{})))}
 
           {:error, :unauthorized} ->
-            {:noreply, put_flash(socket, :error, "Only an admin can do that.")}
+            {:noreply, put_flash(socket, :error, gettext("Only an admin can do that."))}
 
           {:error, _} ->
-            {:noreply, put_flash(socket, :error, "Could not delete that movie night.")}
+            {:noreply, put_flash(socket, :error, gettext("Could not delete that movie night."))}
         end
     end
   end
@@ -134,11 +133,9 @@ defmodule PortfolioWeb.AdminMovieNightLive do
   defp selected_night(_socket), do: :error
 
   defp prepare(%{assigns: %{live_action: :edit}} = socket, %{"id" => id}) do
-    scope = socket.assigns.current_scope
-
     night =
       case Ecto.UUID.cast(id) do
-        {:ok, uuid} -> MovieNights.get_movie_night(scope, uuid)
+        {:ok, uuid} -> MovieNights.get_movie_night(uuid)
         :error -> nil
       end
 
@@ -147,7 +144,7 @@ defmodule PortfolioWeb.AdminMovieNightLive do
         socket
         |> assign(:night, %MovieNight{})
         |> assign(:form, to_form(MovieNight.changeset(%MovieNight{}, %{})))
-        |> put_flash(:error, "That movie night no longer exists.")
+        |> put_flash(:error, gettext("That movie night no longer exists."))
         |> push_navigate(to: ~p"/admin/movie-nights")
 
       night ->
@@ -163,7 +160,7 @@ defmodule PortfolioWeb.AdminMovieNightLive do
     socket
     |> put_flash(:info, message)
     |> assign(:night, night)
-    |> assign(:nights, MovieNights.list_movie_nights(socket.assigns.current_scope))
+    |> assign(:nights, MovieNights.list_movie_nights())
     |> assign(:form, to_form(MovieNight.changeset(night, %{})))
   end
 
@@ -172,21 +169,24 @@ defmodule PortfolioWeb.AdminMovieNightLive do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope} wide>
       <.header>
-        Movie nights
-        <:subtitle>Schedule a night, lock nominations, and close voting.</:subtitle>
+        {gettext("Movie nights")}
+        <:subtitle>{gettext("Schedule a night, lock nominations, and close voting.")}</:subtitle>
         <:actions>
           <.link
             navigate={~p"/admin/movie-nights/new"}
             class="text-sm font-medium text-zinc-900 underline transition hover:text-zinc-600"
           >
-            New night
+            {gettext("New night")}
           </.link>
         </:actions>
       </.header>
 
-      <section class="rounded-lg border border-zinc-200 bg-white p-5">
+      <section
+        :if={@live_action in [:new, :edit]}
+        class="rounded-lg border border-zinc-200 bg-white p-5"
+      >
         <h2 class="text-sm font-semibold text-zinc-900">
-          {if @live_action == :edit, do: "Edit night", else: "New night"}
+          {if @live_action == :edit, do: gettext("Edit night"), else: gettext("New night")}
         </h2>
 
         <.form for={@form} id="movie-night-form" phx-change="validate" phx-submit="save" class="mt-4">
@@ -195,11 +195,11 @@ defmodule PortfolioWeb.AdminMovieNightLive do
             <.input
               field={@form[:note]}
               type="text"
-              label="Note (optional)"
-              placeholder="Sci-fi night"
+              label={gettext("Note (optional)")}
+              placeholder={gettext("Sci-fi night")}
             />
           </div>
-          <.button class="mt-2">Save night</.button>
+          <.button class="mt-2">{gettext("Save night")}</.button>
         </.form>
 
         <div
@@ -211,29 +211,29 @@ defmodule PortfolioWeb.AdminMovieNightLive do
             id="lock-nominations"
             type="button"
             phx-click="lock"
-            data-confirm="Lock nominations? Friends will no longer be able to add films."
+            data-confirm={gettext("Lock nominations? Friends will no longer be able to add films.")}
             class="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:border-zinc-900"
           >
-            Lock nominations
+            {gettext("Lock nominations")}
           </button>
           <button
             :if={@night.phase == "voting"}
             id="close-voting"
             type="button"
             phx-click="close"
-            data-confirm="Close voting? This ends the night."
+            data-confirm={gettext("Close voting? This ends the night.")}
             class="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:border-zinc-900"
           >
-            Close voting
+            {gettext("Close voting")}
           </button>
           <button
             id="delete-night"
             type="button"
             phx-click="delete"
-            data-confirm="Delete this movie night and all of its nominations and votes?"
+            data-confirm={gettext("Delete this movie night and all of its nominations and votes?")}
             class="rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:border-red-600"
           >
-            Delete night
+            {gettext("Delete night")}
           </button>
         </div>
       </section>
@@ -258,11 +258,11 @@ defmodule PortfolioWeb.AdminMovieNightLive do
                 navigate={~p"/admin/movie-nights/#{night.id}/edit"}
                 class="text-xs font-medium text-zinc-600 underline transition hover:text-zinc-900"
               >
-                Edit
+                {gettext("Edit")}
               </.link>
             </div>
           </div>
-          <p :if={@nights == []} class="text-sm text-zinc-500">No movie nights yet.</p>
+          <p :if={@nights == []} class="text-sm text-zinc-500">{gettext("No movie nights yet.")}</p>
         </div>
       </section>
 
@@ -270,7 +270,7 @@ defmodule PortfolioWeb.AdminMovieNightLive do
         navigate={~p"/movie-night"}
         class="mt-8 inline-block text-sm text-zinc-500 underline transition hover:text-zinc-900"
       >
-        View the friend page
+        {gettext("View the friend page")}
       </.link>
     </Layouts.app>
     """

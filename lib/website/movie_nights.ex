@@ -16,42 +16,45 @@ defmodule Portfolio.MovieNights do
 
   @all_topic "movie_nights"
 
-  ## Reads
-
   @doc """
-  Lists movie nights: upcoming and open nights first, ascending by start,
-  then finished nights, newest first. Candidates are preloaded.
+  Lists movie nights: upcoming, open, then finished nights.
+  Finished nights are sorted in descending order.
+  Candidates are preloaded.
   """
-  def list_movie_nights(_scope) do
+  @spec list_movie_nights() :: [MovieNight.t()]
+  def list_movie_nights() do
     upcoming =
       Repo.all(
-        from n in MovieNight,
+        from(n in MovieNight,
           where: n.phase != "done",
           order_by: [asc: n.starts_at],
           preload: [:candidates]
+        )
       )
 
     done =
       Repo.all(
-        from n in MovieNight,
+        from(n in MovieNight,
           where: n.phase == "done",
           order_by: [desc: n.starts_at],
           preload: [:candidates]
+        )
       )
 
     upcoming ++ done
   end
 
   @doc """
-  Gets a single movie night, or nil.
+  Gets a single movie night. Returns nil if no record found.
   """
-  def get_movie_night(_scope, id), do: Repo.get(MovieNight, id)
-
-  ## Admin CRUD
+  @spec get_movie_night(binary()) :: MovieNight.t() | nil
+  def get_movie_night(id), do: Repo.get(MovieNight, id)
 
   @doc """
-  Creates a movie night. Admin only.
+  Creates a movie night. Admins only.
   """
+  @spec create_movie_night(Scope.t(), map()) ::
+          {:ok, MovieNight.t()} | {:error, Ecto.Changeset.t() | :unauthorized}
   def create_movie_night(scope, attrs) do
     if admin?(scope) do
       %MovieNight{}
@@ -64,8 +67,10 @@ defmodule Portfolio.MovieNights do
   end
 
   @doc """
-  Updates a movie night's schedule and note. Admin only.
+  Updates a movie night's schedule and note. Admins only.
   """
+  @spec update_movie_night(Scope.t(), MovieNight.t(), map()) ::
+          {:ok, MovieNight.t()} | {:error, Ecto.Changeset.t() | :unauthorized}
   def update_movie_night(scope, %MovieNight{} = night, attrs) do
     if admin?(scope) do
       night
@@ -78,8 +83,10 @@ defmodule Portfolio.MovieNights do
   end
 
   @doc """
-  Deletes a movie night and, by cascade, its candidates and votes. Admin only.
+  Deletes a movie night, its candidates and votes. Admins only.
   """
+  @spec delete_movie_night(Scope.t(), MovieNight.t()) ::
+          {:ok, MovieNight.t()} | {:error, Ecto.Changeset.t() | :unauthorized}
   def delete_movie_night(scope, %MovieNight{} = night) do
     if admin?(scope) do
       night
@@ -90,18 +97,20 @@ defmodule Portfolio.MovieNights do
     end
   end
 
-  ## Phases
-
   @doc """
-  Locks nominations, moving a night from `nominating` to `voting`. Admin only.
+  Locks nominations, moving a night from `nominating` to `voting`. Admins only.
   """
+  @spec lock_nominations(Scope.t(), MovieNight.t()) ::
+          {:ok, MovieNight.t()} | {:error, Ecto.Changeset.t() | :invalid_phase | :unauthorized}
   def lock_nominations(scope, %MovieNight{} = night) do
     transition(scope, night, "nominating", "voting")
   end
 
   @doc """
-  Closes voting, moving a night from `voting` to `done`. Admin only.
+  Closes voting, moving a night from `voting` to `done`. Admins only.
   """
+  @spec close_voting(Scope.t(), MovieNight.t()) ::
+          {:ok, MovieNight.t()} | {:error, Ecto.Changeset.t() | :invalid_phase | :unauthorized}
   def close_voting(scope, %MovieNight{} = night) do
     transition(scope, night, "voting", "done")
   end
@@ -122,16 +131,16 @@ defmodule Portfolio.MovieNights do
     end
   end
 
-  ## Nominations
-
   @doc """
   Lists a night's candidates in the order they were nominated.
   """
-  def list_candidates(_scope, %MovieNight{id: id}) do
+  @spec list_candidates(MovieNight.t()) :: [Candidate.t()]
+  def list_candidates(%MovieNight{id: id}) do
     Repo.all(
-      from c in Candidate,
+      from(c in Candidate,
         where: c.movie_night_id == ^id,
         order_by: [asc: c.inserted_at]
+      )
     )
   end
 
@@ -189,8 +198,9 @@ defmodule Portfolio.MovieNights do
         else
           candidate =
             Repo.one(
-              from c in Candidate,
+              from(c in Candidate,
                 where: c.id == ^candidate_id and c.movie_night_id == ^id
+              )
             )
 
           if is_nil(candidate) do
@@ -198,8 +208,9 @@ defmodule Portfolio.MovieNights do
           else
             existing =
               Repo.one(
-                from v in Vote,
+                from(v in Vote,
                   where: v.candidate_id == ^candidate.id and v.user_id == ^user.id
+                )
               )
 
             if existing do
@@ -252,12 +263,13 @@ defmodule Portfolio.MovieNights do
   @doc "Returns a map of candidate_id => vote count for the night."
   def tallies(_scope, %MovieNight{id: id}) do
     Repo.all(
-      from v in Vote,
+      from(v in Vote,
         join: c in Candidate,
         on: v.candidate_id == c.id,
         where: c.movie_night_id == ^id,
         group_by: v.candidate_id,
         select: {v.candidate_id, count(v.id)}
+      )
     )
     |> Map.new()
   end
@@ -285,11 +297,12 @@ defmodule Portfolio.MovieNights do
 
   def my_vote_ids(%Scope{user: %{id: user_id}}, %MovieNight{id: id}) do
     Repo.all(
-      from v in Vote,
+      from(v in Vote,
         join: c in Candidate,
         on: v.candidate_id == c.id,
         where: c.movie_night_id == ^id and v.user_id == ^user_id,
         select: v.candidate_id
+      )
     )
     |> MapSet.new()
   end
@@ -309,9 +322,10 @@ defmodule Portfolio.MovieNights do
         |> Enum.map(fn {id, _} -> id end)
 
       Repo.all(
-        from c in Candidate,
+        from(c in Candidate,
           where: c.id in ^winner_ids,
           order_by: [asc: c.inserted_at]
+        )
       )
     end
   end
@@ -322,7 +336,7 @@ defmodule Portfolio.MovieNights do
   end
 
   defp for_update(id) do
-    Repo.one!(from n in MovieNight, where: n.id == ^id, lock: "FOR UPDATE")
+    Repo.one!(from(n in MovieNight, where: n.id == ^id, lock: "FOR UPDATE"))
   end
 
   ## PubSub

@@ -42,6 +42,6 @@ defmodule Portfolio.MovieNightsFixtures do
     end
 
     {:ok, night} = MovieNights.lock_nominations(admin_scope(), night)
-    {night, MovieNights.list_candidates(admin_scope(), night)}
+    {night, MovieNights.list_candidates(night)}
   end
 end

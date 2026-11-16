@@ -8,11 +8,9 @@ defmodule PortfolioWeb.MovieNightLive.Show do
 
   @impl Phoenix.LiveView
   def mount(%{"id" => id}, _session, socket) do
-    scope = socket.assigns.current_scope
-
     night =
       case Ecto.UUID.cast(id) do
-        {:ok, uuid} -> MovieNights.get_movie_night(scope, uuid)
+        {:ok, uuid} -> MovieNights.get_movie_night(uuid)
         :error -> nil
       end
 
@@ -155,7 +153,7 @@ defmodule PortfolioWeb.MovieNightLive.Show do
   defp load_night(socket) do
     scope = socket.assigns.current_scope
 
-    case MovieNights.get_movie_night(scope, socket.assigns.night.id) do
+    case MovieNights.get_movie_night(socket.assigns.night.id) do
       nil ->
         socket
         |> put_flash(:error, "That movie night no longer exists.")
@@ -167,7 +165,7 @@ defmodule PortfolioWeb.MovieNightLive.Show do
   end
 
   defp load_night(socket, scope, night) do
-    candidates = MovieNights.list_candidates(scope, night)
+    candidates = MovieNights.list_candidates(night)
     movies = fetch_movies(socket.assigns[:movies] || %{}, Enum.map(candidates, & &1.tmdb_id))
     tallies = MovieNights.tallies(scope, night)
     my_votes = MovieNights.my_vote_ids(scope, night)
@@ -224,7 +222,7 @@ defmodule PortfolioWeb.MovieNightLive.Show do
   end
 
   defp find_candidate(socket, id) do
-    MovieNights.list_candidates(socket.assigns.current_scope, socket.assigns.night)
+    MovieNights.list_candidates(socket.assigns.night)
     |> Enum.find(&(&1.id == id))
   end
 

@@ -55,7 +55,7 @@ defmodule Portfolio.MovieNightsTest do
       done = finished_night_fixture(%{starts_at: ~N[2026-10-24 19:00:00]})
 
       assert [sooner_id, later_id, done_id] =
-               Enum.map(MovieNights.list_movie_nights(admin_scope()), & &1.id)
+               Enum.map(MovieNights.list_movie_nights(), & &1.id)
 
       assert sooner_id == sooner.id
       assert later_id == later.id
@@ -111,7 +111,7 @@ defmodule Portfolio.MovieNightsTest do
 
       assert {:error, :unauthorized} = MovieNights.withdraw_nomination(other, candidate)
       assert {:ok, %Candidate{}} = MovieNights.withdraw_nomination(author, candidate)
-      assert [] = MovieNights.list_candidates(author, night)
+      assert [] = MovieNights.list_candidates(night)
     end
 
     test "withdrawing after lock is rejected" do
@@ -129,7 +129,7 @@ defmodule Portfolio.MovieNightsTest do
       other = Scope.for_user(user_fixture())
 
       assert {:ok, candidate} = MovieNights.nominate(author, night, 550)
-      assert [%Candidate{id: id}] = MovieNights.list_candidates(other, night)
+      assert [%Candidate{id: id}] = MovieNights.list_candidates(night)
       assert id == candidate.id
     end
 
@@ -140,7 +140,7 @@ defmodule Portfolio.MovieNightsTest do
 
       candidate = candidate_fixture(night)
       assert {:error, :unauthorized} = MovieNights.withdraw_nomination(%Scope{}, candidate)
-      assert [%Candidate{id: id}] = MovieNights.list_candidates(admin_scope(), night)
+      assert [%Candidate{id: id}] = MovieNights.list_candidates(night)
       assert id == candidate.id
     end
 
@@ -149,7 +149,7 @@ defmodule Portfolio.MovieNightsTest do
 
       assert %MovieNight{phase: "voting"} = night
       assert Enum.map(candidates, & &1.tmdb_id) == [550, 551, 552]
-      assert length(MovieNights.list_candidates(admin_scope(), night)) == 3
+      assert length(MovieNights.list_candidates(night)) == 3
     end
 
     test "voting night fixture with zero candidates" do
@@ -164,7 +164,7 @@ defmodule Portfolio.MovieNightsTest do
         assert {:ok, %Candidate{}} = MovieNights.nominate(scope, night, tmdb_id)
       end
 
-      assert Enum.map(MovieNights.list_candidates(scope, night), & &1.tmdb_id) == [550, 551, 552]
+      assert Enum.map(MovieNights.list_candidates(night), & &1.tmdb_id) == [550, 551, 552]
     end
 
     test "withdraw authorization wins over phase" do
