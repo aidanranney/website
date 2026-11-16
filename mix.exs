@@ -68,7 +68,9 @@ defmodule Portfolio.MixProject do
       {:gen_smtp, "~> 1.3"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
-      {:tidewave, "~> 0.9", only: :dev}
+      {:oban, "~> 2.24.2"},
+      {:tidewave, "~> 0.9", only: :dev},
+      {:igniter, "~> 0.6", only: [:dev, :test]}
     ]
   end
 

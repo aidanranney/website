@@ -10,6 +10,7 @@ defmodule Portfolio.Application do
     children = [
       PortfolioWeb.Telemetry,
       Portfolio.Repo,
+      {Oban, Application.fetch_env!(:website, Oban)},
       {DNSCluster, query: Application.get_env(:website, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Portfolio.PubSub},
       # Start a worker by calling: Portfolio.Worker.start_link(arg)

@@ -42,3 +42,5 @@ config :website, Portfolio.Mailer, adapter: Swoosh.Adapters.Test
 config :website, Portfolio.TMDB,
   token: "test-token",
   req_options: [plug: {Req.Test, Portfolio.TMDB}]
+
+config :website, Oban, testing: :manual
