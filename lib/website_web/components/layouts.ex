@@ -70,13 +70,6 @@ defmodule PortfolioWeb.Layouts do
             >
               Log out
             </.link>
-          <% else %>
-            <.link href={~p"/users/log-in"} class="transition-colors hover:text-zinc-900">
-              Log in
-            </.link>
-            <.link href={~p"/users/register"} class="transition-colors hover:text-zinc-900">
-              Register
-            </.link>
           <% end %>
         </nav>
       </div>

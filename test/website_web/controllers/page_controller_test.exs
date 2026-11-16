@@ -23,10 +23,12 @@ defmodule PortfolioWeb.PageControllerTest do
     assert html =~ ~s(href="/contact")
   end
 
-  test "navbar shows log in and register when signed out", %{conn: conn} do
+  test "navbar hides log in and register when signed out", %{conn: conn} do
     html = conn |> get(~p"/") |> html_response(200)
-    assert html =~ ~s(href="/users/log-in")
-    assert html =~ ~s(href="/users/register")
+    assert html =~ ~s(href="/about")
+    assert html =~ ~s(href="/contact")
+    refute html =~ ~s(href="/users/log-in")
+    refute html =~ ~s(href="/users/register")
     refute html =~ ~s(href="/users/settings")
   end
 

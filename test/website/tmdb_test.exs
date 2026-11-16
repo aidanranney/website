@@ -3,11 +3,6 @@ defmodule Portfolio.TMDBTest do
 
   alias Portfolio.TMDB
 
-  setup do
-    :persistent_term.erase({Portfolio.TMDB, :image_base})
-    :ok
-  end
-
   test "configured? reflects the token" do
     assert TMDB.configured?()
   end
