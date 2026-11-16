@@ -31,7 +31,7 @@ defmodule PortfolioWeb.AdminMovieNightLive do
     result =
       case socket.assigns.live_action do
         :edit -> MovieNights.update_movie_night(scope, socket.assigns.night, params)
-        _ -> MovieNights.create_movie_night(scope, params)
+        :new -> MovieNights.create_movie_night(scope, params)
       end
 
     case result do

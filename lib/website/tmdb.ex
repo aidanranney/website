@@ -111,12 +111,7 @@ defmodule Portfolio.TMDB do
 
   defp token, do: Keyword.get(config(), :token)
 
-  defp image_base do
-    config()
-    |> Keyword.get(:image_base, @default_image_base)
-    |> String.trim_trailing("/")
-    |> Kernel.<>("/")
-  end
+  defp image_base, do: Keyword.get(config(), :image_base, @default_image_base)
 
   defp normalize_movie(movie) do
     %{
