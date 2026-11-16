@@ -70,7 +70,9 @@ defmodule Portfolio.MixProject do
       {:bandit, "~> 1.5"},
       {:oban, "~> 2.24.2"},
       {:tidewave, "~> 0.9", only: :dev},
-      {:igniter, "~> 0.6", only: [:dev, :test]}
+      {:igniter, "~> 0.6", only: [:dev, :test]},
+      {:ex_check, "~> 0.17.1", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.7.19", only: [:dev, :test], runtime: false}
     ]
   end
 
