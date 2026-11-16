@@ -26,13 +26,23 @@ defmodule PortfolioWeb.MovieNightLiveTest do
           })
 
         conn.request_path == "/3/search/movie" ->
+          page =
+            conn.query_string
+            |> URI.decode_query()
+            |> Map.get("page", "1")
+            |> String.to_integer()
+
+          id = 549 + page
+
           Req.Test.json(conn, %{
+            "page" => page,
+            "total_pages" => 2,
             "results" => [
               %{
-                "id" => 550,
-                "title" => "Fight Club",
+                "id" => id,
+                "title" => "Film #{id}",
                 "release_date" => "1999-10-15",
-                "overview" => "An insomniac office worker.",
+                "overview" => "A film.",
                 "poster_path" => nil
               }
             ]
@@ -95,6 +105,21 @@ defmodule PortfolioWeb.MovieNightLiveTest do
     lv |> element("#nominate-550") |> render_click()
     assert has_element?(lv, "[data-tmdb-id='550']")
     assert render(lv) =~ "Film 550"
+  end
+
+  test "infinite scroll appends the next page of TMDB results", %{conn: conn} do
+    night = movie_night_fixture()
+    {:ok, lv, _html} = live(conn |> log_in_user(user_fixture()), ~p"/movie-night/#{night.id}")
+
+    lv |> form("#search-form", %{"search" => %{"query" => "fight"}}) |> render_change()
+    assert has_element?(lv, "#nominate-550")
+    assert has_element?(lv, "#results-sentinel")
+
+    render_hook(lv, "load-more", %{})
+
+    assert has_element?(lv, "#nominate-550")
+    assert has_element?(lv, "#nominate-551")
+    refute has_element?(lv, "#results-sentinel")
   end
 
   test "only the nominator sees a withdraw button", %{conn: conn} do

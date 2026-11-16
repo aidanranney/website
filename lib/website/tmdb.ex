@@ -33,18 +33,35 @@ defmodule Portfolio.TMDB do
   def configured?, do: is_binary(token()) and token() != ""
 
   @doc """
-  Searches movies by title, returning a normalized list of results.
+  Searches movies by title for a 1-based `page`, returning normalized results
+  together with TMDB's paging metadata so callers can load subsequent pages.
   """
-  @spec search(String.t()) :: {:ok, [movie()]} | {:error, {:http, integer()}}
-  def search(query) when is_binary(query) do
+  @spec search(String.t(), pos_integer()) ::
+          {:ok, %{movies: [movie()], page: integer(), total_pages: integer()}}
+          | {:error, term()}
+  def search(query, page \\ 1) when is_binary(query) and is_integer(page) and page > 0 do
     if String.trim(query) == "" do
-      {:ok, []}
+      {:ok, %{movies: [], page: 0, total_pages: 0}}
     else
       with :ok <- ensure_configured(),
-           {:ok, response} <- Req.get(client(), url: "/search/movie", params: [query: query]) do
+           {:ok, response} <-
+             Req.get(client(),
+               url: "/search/movie",
+               params: [query: query, include_adult: false, page: page]
+             ) do
         case response.status do
-          200 -> {:ok, Enum.map(response.body["results"] || [], &normalize_movie/1)}
-          status -> {:error, {:http, status}}
+          200 ->
+            body = response.body
+
+            {:ok,
+             %{
+               movies: Enum.map(body["results"] || [], &normalize_movie/1),
+               page: body["page"] || page,
+               total_pages: body["total_pages"] || page
+             }}
+
+          status ->
+            {:error, {:http, status}}
         end
       end
     end
