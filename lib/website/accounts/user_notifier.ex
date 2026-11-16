@@ -9,7 +9,7 @@ defmodule Portfolio.Accounts.UserNotifier do
     email =
       new()
       |> to(recipient)
-      |> from({"Aidan Ranney", "me@aidanranney.com"})
+      |> from({"Aidan Ranney", "noreply@aidanranney.com"})
       |> subject(subject)
       |> text_body(body)
 
