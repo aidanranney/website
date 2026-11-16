@@ -30,6 +30,7 @@ defmodule PortfolioWeb.MovieNightLive.Show do
          socket
          |> assign(:night, night)
          |> assign(:form, to_form(%{"query" => ""}, as: :search))
+         |> assign(search_query: "", page: 0, total_pages: 0, has_more: false)
          |> stream(:results, [])
          |> load_night()}
     end
@@ -48,17 +49,44 @@ defmodule PortfolioWeb.MovieNightLive.Show do
   def handle_event("search", %{"search" => %{"query" => query}}, socket) do
     socket =
       case TMDB.search(query) do
-        {:ok, movies} ->
-          items = Enum.map(movies, &Map.put(&1, :id, &1.tmdb_id))
-          socket |> stream(:results, items, reset: true)
+        {:ok, page} ->
+          socket
+          |> stream(:results, page_items(page), reset: true)
+          |> assign_page(query, page)
 
         {:error, _} ->
           socket
           |> put_flash(:error, "Movie search is unavailable right now.")
           |> stream(:results, [], reset: true)
+          |> assign_page(query, empty_page())
       end
 
     {:noreply, assign(socket, :form, to_form(%{"query" => query}, as: :search))}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("load-more", _params, socket) do
+    if socket.assigns.has_more do
+      query = socket.assigns.search_query
+      next_page = socket.assigns.page + 1
+
+      socket =
+        case TMDB.search(query, next_page) do
+          {:ok, page} ->
+            socket
+            |> stream(:results, page_items(page))
+            |> assign_page(query, page)
+
+          {:error, _} ->
+            socket
+            |> put_flash(:error, "Could not load more films.")
+            |> assign(:has_more, false)
+        end
+
+      {:noreply, socket}
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl Phoenix.LiveView
@@ -207,6 +235,19 @@ defmodule PortfolioWeb.MovieNightLive.Show do
     end
   end
 
+  defp empty_page, do: %{movies: [], page: 0, total_pages: 0}
+
+  defp page_items(%{movies: movies}), do: Enum.map(movies, &Map.put(&1, :id, &1.tmdb_id))
+
+  defp assign_page(socket, query, %{movies: movies, page: page, total_pages: total_pages}) do
+    assign(socket,
+      search_query: query,
+      page: page,
+      total_pages: total_pages,
+      has_more: String.trim(query) != "" and movies != [] and page < total_pages
+    )
+  end
+
   @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
@@ -279,6 +320,15 @@ defmodule PortfolioWeb.MovieNightLive.Show do
               Nominate
             </button>
           </div>
+        </div>
+
+        <div
+          :if={@has_more}
+          id="results-sentinel"
+          phx-hook="InfiniteScroll"
+          class="mt-4 flex justify-center py-2 text-xs text-zinc-400"
+        >
+          Loading more films…
         </div>
       </section>
 

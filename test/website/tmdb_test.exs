@@ -7,12 +7,15 @@ defmodule Portfolio.TMDBTest do
     assert TMDB.configured?()
   end
 
-  test "search normalizes results" do
+  test "search normalizes results and exposes paging" do
     Req.Test.stub(Portfolio.TMDB, fn conn ->
       assert conn.request_path == "/3/search/movie"
       assert conn.query_string =~ "query=fight"
+      assert conn.query_string =~ "page=1"
 
       Req.Test.json(conn, %{
+        "page" => 1,
+        "total_pages" => 3,
         "results" => [
           %{
             "id" => 550,
@@ -26,7 +29,10 @@ defmodule Portfolio.TMDBTest do
       })
     end)
 
-    assert {:ok, [fight_club, no_date]} = TMDB.search("fight")
+    assert {:ok, page} = TMDB.search("fight")
+    assert page.page == 1
+    assert page.total_pages == 3
+    [fight_club, no_date] = page.movies
     assert fight_club.tmdb_id == 550
     assert fight_club.title == "Fight Club"
     assert fight_club.year == 1999
@@ -35,6 +41,15 @@ defmodule Portfolio.TMDBTest do
     assert no_date.tmdb_id == 551
     assert no_date.title == "No Date"
     assert no_date.year == nil
+  end
+
+  test "search requests the given page and forwards paging metadata" do
+    Req.Test.stub(Portfolio.TMDB, fn conn ->
+      assert conn.query_string =~ "page=2"
+      Req.Test.json(conn, %{"page" => 2, "total_pages" => 5, "results" => []})
+    end)
+
+    assert {:ok, %{movies: [], page: 2, total_pages: 5}} = TMDB.search("fight", 2)
   end
 
   test "get_movie normalizes a movie" do
