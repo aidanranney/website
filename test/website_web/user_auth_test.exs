@@ -1,5 +1,5 @@
 defmodule PortfolioWeb.UserAuthTest do
-  use PortfolioWeb.ConnCase, async: true
+  use PortfolioWeb.ConnCase
 
   alias Phoenix.LiveView
   alias Portfolio.Accounts

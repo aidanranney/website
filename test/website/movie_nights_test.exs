@@ -1,5 +1,5 @@
 defmodule Portfolio.MovieNightsTest do
-  use Portfolio.DataCase, async: true
+  use Portfolio.DataCase
 
   import Portfolio.AccountsFixtures
   import Portfolio.MovieNightsFixtures

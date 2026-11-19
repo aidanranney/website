@@ -8,12 +8,16 @@ primary_region = 'sjc'
 kill_signal = 'SIGTERM'
 
 [build]
-[deploy]
-  release_command = '/app/bin/migrate'
 
 [env]
   PHX_HOST = 'asr-website.fly.dev'
   PORT = '8080'
+  DATABASE_PATH = '/mnt/website_data/website_prod.db'
+
+[mounts]
+  source = 'website_data'
+  destination = '/mnt/website_data'
+  initial_size = '1gb'
 
 [http_service]
   internal_port = 8080

@@ -2,11 +2,9 @@ defmodule Portfolio.Repo.Migrations.CreateUsersAuthTables do
   use Ecto.Migration
 
   def change do
-    execute "CREATE EXTENSION IF NOT EXISTS citext", ""
-
     create table(:users, primary_key: false) do
       add :id, :binary_id, primary_key: true
-      add :email, :citext, null: false
+      add :email, :string, collate: :nocase, null: false
       add :hashed_password, :string
       add :confirmed_at, :utc_datetime
 

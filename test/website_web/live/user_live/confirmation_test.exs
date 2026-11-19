@@ -1,5 +1,5 @@
 defmodule PortfolioWeb.UserLive.ConfirmationTest do
-  use PortfolioWeb.ConnCase, async: true
+  use PortfolioWeb.ConnCase
 
   import Phoenix.LiveViewTest
   import Portfolio.AccountsFixtures

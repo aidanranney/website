@@ -1,5 +1,5 @@
 defmodule PortfolioWeb.UserSessionControllerTest do
-  use PortfolioWeb.ConnCase, async: true
+  use PortfolioWeb.ConnCase
 
   import Portfolio.AccountsFixtures
   alias Portfolio.Accounts

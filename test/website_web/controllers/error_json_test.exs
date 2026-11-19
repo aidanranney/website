@@ -1,5 +1,5 @@
 defmodule PortfolioWeb.ErrorJSONTest do
-  use PortfolioWeb.ConnCase, async: true
+  use PortfolioWeb.ConnCase
 
   test "renders 404" do
     assert PortfolioWeb.ErrorJSON.render("404.json", %{}) == %{errors: %{detail: "Not Found"}}

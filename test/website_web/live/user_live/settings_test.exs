@@ -1,5 +1,5 @@
 defmodule PortfolioWeb.UserLive.SettingsTest do
-  use PortfolioWeb.ConnCase, async: true
+  use PortfolioWeb.ConnCase
 
   alias Portfolio.Accounts
   import Phoenix.LiveViewTest

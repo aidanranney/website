@@ -7,6 +7,9 @@ defmodule Portfolio.Application do
 
   @impl true
   def start(_type, _args) do
+    # Fly's release_command machine has no volume, so migrate on boot in prod.
+    if System.get_env("DATABASE_PATH"), do: Portfolio.Release.migrate()
+
     children = [
       PortfolioWeb.Telemetry,
       Portfolio.Repo,

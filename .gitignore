@@ -41,3 +41,7 @@ npm-debug.log
 # macos
 .DS_Store
 */*/.DS_Store
+
+# SQLite database files
+*.db
+*.db-*

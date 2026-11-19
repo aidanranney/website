@@ -2,13 +2,10 @@ import Config
 
 # Configure your database
 config :website, Portfolio.Repo,
-  database: System.get_env("DB_NAME"),
-  username: System.get_env("DB_USER"),
-  password: System.get_env("DB_PASS"),
-  hostname: "localhost",
+  database: Path.expand("../website_dev.db", Path.dirname(__ENV__.file)),
+  pool_size: 5,
   stacktrace: true,
-  show_sensitive_data_on_connection_error: true,
-  pool_size: 10
+  show_sensitive_data_on_connection_error: true
 
 # For development, we disable any cache and enable
 # debugging and code reloading.

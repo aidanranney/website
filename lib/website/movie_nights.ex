@@ -340,12 +340,13 @@ defmodule Portfolio.MovieNights do
   end
 
   defp transact(id, fun) do
-    Repo.transact(fn -> fun.(for_update(id)) end)
+    # SQLite has no row locks; IMMEDIATE serializes writers from BEGIN.
+    Repo.transact(fn -> fun.(load_night(id)) end, mode: :immediate)
     |> broadcast()
   end
 
-  defp for_update(id) do
-    Repo.one!(from(n in MovieNight, where: n.id == ^id, lock: "FOR UPDATE"))
+  defp load_night(id) do
+    Repo.one!(from(n in MovieNight, where: n.id == ^id))
   end
 
   ## PubSub

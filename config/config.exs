@@ -8,8 +8,7 @@
 import Config
 
 config :website, Oban,
-  engine: Oban.Engines.Basic,
-  notifier: Oban.Notifiers.Postgres,
+  engine: Oban.Engines.Lite,
   queues: [default: 10],
   lifeline: [rescue_after: {2, :hours}],
   pruner: [max_age: {1, :day}],
