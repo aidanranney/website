@@ -10,7 +10,7 @@ kill_signal = 'SIGTERM'
 [build]
 
 [env]
-  PHX_HOST = 'asr-website.fly.dev'
+  PHX_HOST = 'aidanranney.com'
   PORT = '8080'
   DATABASE_PATH = '/mnt/website_data/website_prod.db'
 
