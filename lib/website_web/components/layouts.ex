@@ -39,34 +39,37 @@ defmodule PortfolioWeb.Layouts do
     ~H"""
     <header class="border-b border-zinc-200">
       <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-        <a href={~p"/"} class="text-sm font-semibold tracking-tight text-zinc-900">
+        <.link navigate={~p"/"} class="nav-brand text-sm font-semibold tracking-tight">
           Aidan Ranney
-        </a>
+        </.link>
 
         <nav class="flex items-center gap-6 text-sm text-zinc-600">
-          <.link navigate={~p"/about"} class="transition-colors hover:text-zinc-900">About</.link>
-          <.link navigate={~p"/contact"} class="transition-colors hover:text-zinc-900">
+          <.link navigate={~p"/about"} class="nav-link">About</.link>
+          <.link navigate={~p"/contact"} class="nav-link">
             Contact
           </.link>
           <%= if @current_scope && @current_scope.user do %>
             <span class="h-4 w-px bg-zinc-200" aria-hidden="true"></span>
-            <.link href={~p"/movie-night"} class="transition-colors hover:text-zinc-900">
+            <.link href={~p"/movie-night"} class="nav-link">
               Movie night
             </.link>
-            <.link href={~p"/users/settings"} class="transition-colors hover:text-zinc-900">
+            <.link
+              href={~p"/users/settings"}
+              class="nav-link"
+            >
               Settings
             </.link>
             <.link
               :if={Portfolio.Accounts.Scope.admin?(@current_scope)}
               href={~p"/admin"}
-              class="transition-colors hover:text-zinc-900"
+              class="nav-link"
             >
               Admin
             </.link>
             <.link
               href={~p"/users/log-out"}
               method="delete"
-              class="transition-colors hover:text-zinc-900"
+              class="nav-link"
             >
               Log out
             </.link>

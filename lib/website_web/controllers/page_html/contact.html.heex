@@ -1,12 +1,18 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
   <section class="space-y-6">
-    <h1 class="text-3xl font-semibold tracking-tight">Contact</h1>
+    <h1 class="text-3xl font-semibold tracking-tight">{gettext("Contact")}</h1>
     <p class="text-lg leading-8 text-zinc-600">
-      You can find me on
-      <.link target="_blank" href="https://github.com/aidanranney">Github</.link>
-      or <.link target="_blank" href="https://linkedin.com/in/aidan-ranney-429208149/">LinkedIn</.link>.
+      {raw(
+        gettext(
+          "You can find me on %{gh_link_start}Github%{link_end} or %{ln_link_start}LinkedIn%{link_end}",
+          gh_link_start: "<a target=\"_blank\" href=\"https://github.com/aidanranney\">",
+          ln_link_start:
+            "<a target=\"_blank\" href=\"https://linkedin.com/in/aidan-ranney-429208149/\">",
+          link_end: "</a>"
+        )
+      )}
     </p>
-    <p class="text-lg leading-8 text-zinc-600">The best way to reach me is email.</p>
+    <p class="text-lg leading-8 text-zinc-600">{gettext("The best way to reach me is email.")}</p>
     <.link
       href="mailto:hello@example.com"
       class="inline-block text-lg font-medium text-zinc-900 underline decoration-zinc-300 underline-offset-4 transition-colors hover:decoration-zinc-900"
